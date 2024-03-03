@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"time"
 
 	"github.com/borowiak-m/go-microservice/handlers"
 )
@@ -25,6 +28,29 @@ func main() {
 	servMx.Handle("/", handlerRoot)
 	//   register handlerGreeting as server for "/greeting" pattern
 	servMx.Handle("/greeting", handlerGreeting)
-	//   create web server on port 9090 using defined serv mux
-	http.ListenAndServe(":9090", servMx)
+	//   create web server
+	server := &http.Server{
+		Addr:         ":9090", // on port 9090
+		Handler:      servMx,  // using defined serv mux
+		IdleTimeout:  120 * time.Second,
+		ReadTimeout:  1 * time.Second,
+		WriteTimeout: 1 * time.Second,
+	}
+	// start server on a separate process (non blocking)
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, os.Kill)
+	// waiting on main process for termination signals to greacefully handle the event
+	// potentially close any db connections etc
+	sig := <-sigChan // blocking until receives a signal from sigChan
+	log.Println("Received terminate, greaceful shotdown", sig)
+	tcx, _ := context.WithTimeout(context.Background(), 30*time.Second)
+	server.Shutdown(tcx)
 }

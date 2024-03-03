@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Product defines the structure for the API product
 type Product struct {
 	ID          int     `json:"id"`
 	Name        string  `json:"name"`
@@ -17,8 +18,12 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
+// Products is a collection of Product
 type Products []*Product
 
+// Serializes contents of the collection to JSON
+// NewEncoder has better performance than json.Unmarshall
+// due to no usage of interim buffer in memory
 func (prods *Products) ToJSON(wrt io.Writer) error {
 	encoder := json.NewEncoder(wrt)
 	return encoder.Encode(prods)
@@ -28,6 +33,7 @@ func GetProducts() Products {
 	return productList
 }
 
+// Static data for time being as collection of Product
 var productList = []*Product{
 	&Product{
 		ID:          1,

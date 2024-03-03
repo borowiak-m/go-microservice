@@ -1,47 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"io"
 	"log"
 	"net/http"
+	"os"
+
+	"github.com/borowiak-m/go-microservice/handlers"
 )
 
 func main() {
-	// basic handler
-	http.HandleFunc("/root", func(reqW http.ResponseWriter, req *http.Request) {
-		log.Println("Root request received")
-		dat, err := io.ReadAll(req.Body)
-		if err != nil {
-			log.Panic("Error on root request parsing body")
-			http.Error(reqW, "Oooops", http.StatusBadRequest)
-			return
-		}
-		log.Println(string(dat))
-		_, err = fmt.Fprintf(reqW, "hello %s", dat)
-		if err != nil {
-			log.Panic("Error writing back to request")
-			http.Error(reqW, "Oooops", http.StatusBadRequest)
-			return
-		}
-	})
-	// test handler
-	http.HandleFunc("/test", func(reqW http.ResponseWriter, req *http.Request) {
-		log.Println("Test request received")
-		dat, err := io.ReadAll(req.Body)
-		if err != nil {
-			log.Panic("Error on root request parsing body")
-			http.Error(reqW, "Oooops", http.StatusBadRequest)
-			return
-		}
-		log.Println(string(dat))
-		_, err = fmt.Fprintf(reqW, "hello %s", dat)
-		if err != nil {
-			log.Panic("Error writing back to request")
-			http.Error(reqW, "Oooops", http.StatusBadRequest)
-			return
-		}
-	})
-	// create a web server
-	http.ListenAndServe(":9090", nil)
+	// new logger
+	newlogger := log.New(os.Stdout, "product-api", log.LstdFlags)
+	// create handler for root with new logger
+	handlerRoot := handlers.NewRoot(newlogger)
+	// new serve mux
+	servMx := http.NewServeMux()
+	// register handler as server for "/" pattern
+	servMx.Handle("/", handlerRoot)
+	// create web server on port 9090 using defined serv mux
+	http.ListenAndServe(":9090", servMx)
 }

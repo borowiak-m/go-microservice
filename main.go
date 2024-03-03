@@ -20,6 +20,8 @@ func main() {
 	handlerRoot := handlers.NewRoot(newlogger)
 	//   create handler for greetings with logger
 	handlerGreeting := handlers.NewGreeting(newlogger)
+	//   create handler for products with logger
+	handlderProducts := handlers.NewProducts(newlogger)
 
 	// SERVER
 	//   new serve mux
@@ -28,6 +30,9 @@ func main() {
 	servMx.Handle("/", handlerRoot)
 	//   register handlerGreeting as server for "/greeting" pattern
 	servMx.Handle("/greeting", handlerGreeting)
+	//   register handlerProduct as server for "/products" pattern
+	servMx.Handle("/products", handlderProducts)
+	//
 	//   create web server
 	server := &http.Server{
 		Addr:         ":9090", // on port 9090
@@ -40,13 +45,14 @@ func main() {
 	go func() {
 		err := server.ListenAndServe()
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Error starting server: %s\n", err)
+			os.Exit(1)
 		}
 	}()
 
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
-	signal.Notify(sigChan, os.Kill)
+	//signal.Notify(sigChan, os.Kill)
 	// waiting on main process for termination signals to greacefully handle the event
 	// potentially close any db connections etc
 	sig := <-sigChan // blocking until receives a signal from sigChan

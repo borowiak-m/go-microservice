@@ -29,7 +29,7 @@ func main() {
 	//servMx.Handle("/", handlderProducts)
 
 	putRouter := servMx.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/{id:[0-9]+}", handlderProducts.UpdateProducts)
+	putRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateProducts)
 	// executes middleware before it can go to the HandleFunc
 	putRouter.Use(handlderProducts.MiddlewareProductValidation)
 

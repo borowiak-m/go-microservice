@@ -22,8 +22,11 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
+// Using the validator package to use struct tags for data validation
+// returns true or false if struct conforms to set out requirements
 func (prod *Product) Validate() error {
 	validate := validator.New()
+	// register a validation func that will run on "sku" tag
 	validate.RegisterValidation("sku", validateSKU)
 	return validate.Struct(prod)
 }

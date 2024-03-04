@@ -35,8 +35,9 @@ The server will start on port 9090. You can access the API at http://localhost:9
 
 GET /products
 
-Status code: ``` 200 OK``` 
-Response Body: A JSON array of product objects, each containing ID, Name, Description, Price, and SKU.
+**Success response:**
+
+- Status code: ``` 200 OK```, Response Body: A JSON array of product objects, each containing ID, Name, Description, Price, and SKU.
 
 Example:
 
@@ -60,16 +61,21 @@ Example:
 
 ```
 
-Error responses:
-- Status code: ```500 Internal Server Error```
-- Error message: ```"Unable to marshall products to JSON"```
+**Error responses:**
+
+- Status code: ```500 Internal Server Error```, Error message: ```"Unable to marshall products to JSON"```
 
 ### Add Product
 
 POST /products
 
-Status code: ``` 200 OK``` 
-Response Body: No body returned
+**Success response:**
+
+- Status code: ``` 200 OK```, Response Body: No body returned
+
+**Error Responses:**
+
+- Status Code: ```400 Bad Request```, Error Message: "Unable to parse from JSON request body to Product." or "Error validating product: [validation error message]."
 
 ### Update Product 
 
@@ -78,8 +84,15 @@ PUT /products/{id}
 Updates the details of an existing product by ID. 
 Requires a JSON body with the fields you wish to update.
 
-Status code: ``` 200 OK``` 
-Response Body: No body returned
+**Success response:**
+
+- Status code: ``` 200 OK```, Response Body: No body returned
+
+**Error responses:**
+
+- Status Code: ```400 Bad Request```, Error Message: "Unable to parse Product id." or "Unable to parse from JSON request body to Product." or "Error validating product: [validation error message]."
+- Status Code: ```404 Not Found```, Error Message: "Product not found."
+- Status Code: ```500 Internal Server Error```, Error Message: "Product update failed."
 
 ### Examples
 

@@ -29,6 +29,7 @@ func (prods *Products) GetProducts(reqW http.ResponseWriter, req *http.Request) 
 	}
 }
 
+// POST request function to handle a creation of a new product
 func (prods *Products) AddProduct(reqW http.ResponseWriter, req *http.Request) {
 	prods.log.Println("POST request response")
 	prod := req.Context().Value(KeyProduct{}).(data.Product)
@@ -36,6 +37,8 @@ func (prods *Products) AddProduct(reqW http.ResponseWriter, req *http.Request) {
 	data.AddProduct(&prod)
 }
 
+// PUT request function to handle updating items parameters fetched by id variable
+// via context storage with Gorilla framework
 func (prods *Products) UpdateProducts(reqW http.ResponseWriter, req *http.Request) {
 
 	vars := mux.Vars(req)

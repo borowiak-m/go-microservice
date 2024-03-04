@@ -79,6 +79,8 @@ func UpdateProduct(id int, prod *Product) error {
 
 var ErrProductNotFound = fmt.Errorf("Product not found")
 
+// Find product by id, used in PUT request func to return a single item
+// and update its params from request
 func findProduct(id int) (*Product, int, error) {
 	for index, prod := range productList {
 		if prod.ID == id {

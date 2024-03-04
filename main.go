@@ -16,20 +16,12 @@ func main() {
 	newlogger := log.New(os.Stdout, "product-api", log.LstdFlags)
 
 	// HANDLERS
-	//   create handler for root with new logger
-	handlerRoot := handlers.NewRoot(newlogger)
-	//   create handler for greetings with logger
-	handlerGreeting := handlers.NewGreeting(newlogger)
 	//   create handler for products with logger
 	handlderProducts := handlers.NewProducts(newlogger)
 
 	// SERVER
 	//   new serve mux
 	servMx := http.NewServeMux()
-	//   register handlerRoot as server for "/" pattern
-	servMx.Handle("/", handlerRoot)
-	//   register handlerGreeting as server for "/greeting" pattern
-	servMx.Handle("/greeting", handlerGreeting)
 	//   register handlerProduct as server for "/products" pattern
 	servMx.Handle("/products", handlderProducts)
 	//

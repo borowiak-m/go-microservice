@@ -2,6 +2,7 @@ package data
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 )
@@ -29,8 +30,48 @@ func (prods *Products) ToJSON(wrt io.Writer) error {
 	return encoder.Encode(prods)
 }
 
+// Decoding struct from JSON
+func (prod *Product) FromJSON(re io.Reader) error {
+	decoder := json.NewDecoder(re)
+	return decoder.Decode(prod)
+}
+
 func GetProducts() Products {
 	return productList
+}
+
+func AddProduct(prod *Product) {
+	prod.ID = getNextId()
+	productList = append(productList, prod)
+}
+
+func UpdateProduct(id int, prod *Product) error {
+	_, pos, err := findProduct(id)
+	if err != nil {
+		return err
+	}
+
+	prod.ID = id
+	productList[pos] = prod
+
+	return nil
+}
+
+var ErrProductNotFound = fmt.Errorf("Product not found")
+
+func findProduct(id int) (*Product, int, error) {
+	for index, prod := range productList {
+		if prod.ID == id {
+			return prod, index, nil
+		}
+	}
+
+	return &Product{}, -1, ErrProductNotFound
+}
+
+func getNextId() int {
+	lastItem := productList[len(productList)-1]
+	return lastItem.ID + 1
 }
 
 // Static data for time being as collection of Product

@@ -35,9 +35,41 @@ The server will start on port 9090. You can access the API at http://localhost:9
 
 GET /products
 
+Status code: ``` 200 OK``` 
+Response Body: A JSON array of product objects, each containing ID, Name, Description, Price, and SKU.
+
+Example:
+
+```
+[
+  {
+    "id": 1,
+    "name": "Latte",
+    "description": "Frothy milky coffee",
+    "price": 2.45,
+    "sku": "lat-cof-1"
+  },
+  {
+    "id": 2,
+    "name": "Espresso",
+    "description": "Strong coffee without milk",
+    "price": 1.99,
+    "sku": "esp-cof-2"
+  }
+]
+
+```
+
+Error responses:
+- Status code: ```500 Internal Server Error```
+- Error message: ```"Unable to marshall products to JSON"```
+
 ### Add Product
 
 POST /products
+
+Status code: ``` 200 OK``` 
+Response Body: No body returned
 
 ### Update Product 
 
@@ -45,6 +77,9 @@ PUT /products/{id}
 
 Updates the details of an existing product by ID. 
 Requires a JSON body with the fields you wish to update.
+
+Status code: ``` 200 OK``` 
+Response Body: No body returned
 
 ### Examples
 
@@ -116,6 +151,27 @@ Here's an overview of the validation process:
 - A regular expression ([A-Za-z]+-[A-Za-z]+-[A-Za-z]+) is used to match the SKU format.
 - The custom validator, validateSKU, checks if the SKU field conforms to this pattern. Only SKUs matching the pattern pass the validation.
 - This validation is part of the product's Validate method, ensuring that no product is added or updated in the system without a properly formatted SKU.
+
+## SKU Validation and Business Logic Considerations
+
+While our API enforces a specific format for the SKU to ensure consistency and readability, it's important to note that we do not validate the uniqueness of the SKU within our system. 
+This decision is intentionally aligned with the flexibility needed to accommodate various business requirements, especially in scenarios where product grouping plays a crucial role.
+
+### Business Requirements and Product Grouping
+
+In certain industries, such as fresh produce distribution, the differentiation between products might not solely rely on the SKU. For example, a range of tomatoes could be differentiated based on a combination of factors like SKU, weight, or case size. 
+In these cases, products from different vendors may be treated as a single SKU, despite variations in pallet or container size.
+
+This approach allows our API to be adaptable to diverse business models, where the level of product grouping and differentiation criteria may vary significantly. Here are a few key points to consider:
+
+- Flexibility in Product Cataloging: By not enforcing SKU uniqueness, our API provides businesses the flexibility to catalog their products based on their unique operational and logistical requirements.
+
+- Adaptability to Business Models: This approach supports various business models and distribution strategies, particularly in sectors where products are similar but differentiated by secondary attributes.
+
+- Custom Implementation for Uniqueness: Should your business logic require unique SKUs for each product variant, this constraint would need to be implemented at the application level, taking into consideration the specific needs and rules of your operational model.
+
+
+
 
 
 

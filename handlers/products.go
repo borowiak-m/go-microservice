@@ -32,6 +32,7 @@ func (prods *Products) GetProducts(reqW http.ResponseWriter, req *http.Request) 
 func (prods *Products) AddProduct(reqW http.ResponseWriter, req *http.Request) {
 	prods.log.Println("POST request response")
 	prod := req.Context().Value(KeyProduct{}).(data.Product)
+	prods.log.Println("POST we have the prod:", prod)
 	data.AddProduct(&prod)
 }
 
@@ -67,7 +68,7 @@ type KeyProduct struct {
 // docs: https://github.com/gorilla/mux?tab=readme-ov-file#middleware
 func (prods *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
-		prod := &data.Product{}
+		prod := data.Product{}
 
 		err := prod.FromJSON(req.Body)
 		if err != nil {

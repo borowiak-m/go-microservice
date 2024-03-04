@@ -51,26 +51,28 @@ Requires a JSON body with the fields you wish to update.
 Adding a new product:
 
 POST /products
-Content-Type: application/json
+
+  Content-Type: application/json
 ```
 {
   "name": "Espresso",
   "description": "Strong coffee without milk",
   "price": 1.99,
-  "sku": "esp-cof-2"
+  "sku": "esp-cof-yyt"
 }
 ```
 
 Updating a product:
 
 PUT /products/1
-Content-Type: application/json
+
+  Content-Type: application/json
 ```
 {
   "name": "Double Espresso",
   "description": "Extra strong espresso coffee",
   "price": 2.49,
-  "sku": "esp-cof-2"
+  "sku": "esp-cof-yyy"
 }
 ```
 

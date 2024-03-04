@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"log"
 	"net/http"
-	"regexp"
 	"strconv"
 
 	"github.com/borowiak-m/go-microservice/data"
+	"github.com/gorilla/mux"
 )
 
 type Products struct {
@@ -17,50 +18,7 @@ func NewProducts(log *log.Logger) *Products {
 	return &Products{log}
 }
 
-func (prods *Products) ServeHTTP(reqW http.ResponseWriter, req *http.Request) {
-	prods.log.Println("ServeHTTP response", req.URL.Path)
-	if req.Method == http.MethodGet {
-		prods.getProducts(reqW, req)
-		return
-	}
-	if req.Method == http.MethodPost {
-		prods.addProduct(reqW, req)
-		return
-	}
-
-	if req.Method == http.MethodPut {
-		prods.log.Println("PUT response", req.URL.Path)
-		reg := regexp.MustCompile(`/([0-9]+)`)
-		grp := reg.FindAllStringSubmatch(req.URL.Path, -1)
-		prods.log.Println(grp)
-		if len(grp) != 1 {
-			prods.log.Println("Invalid URI more than one id")
-			http.Error(reqW, "Invalid URI", http.StatusBadRequest)
-			return
-		}
-		if len(grp[0]) != 2 {
-			prods.log.Println("Invalid URI more than one capture group")
-			http.Error(reqW, "Invalid URI", http.StatusBadRequest)
-			return
-		}
-
-		idStr := grp[0][1]
-		id, err := strconv.Atoi(idStr)
-		if err != nil {
-			prods.log.Println("Invalid URI unable to convert to number", idStr)
-			http.Error(reqW, "Couldn't convert id to int", http.StatusBadRequest)
-			return
-		}
-		prods.log.Println("Got id", id)
-		prods.updateProducts(id, reqW, req)
-
-	}
-
-	// catch all - for all other methods
-	reqW.WriteHeader(http.StatusMethodNotAllowed)
-}
-
-func (prods *Products) getProducts(reqW http.ResponseWriter, req *http.Request) {
+func (prods *Products) GetProducts(reqW http.ResponseWriter, req *http.Request) {
 	// get products
 	lp := data.GetProducts()
 	// encode to JSON format
@@ -70,32 +28,25 @@ func (prods *Products) getProducts(reqW http.ResponseWriter, req *http.Request) 
 	}
 }
 
-func (prods *Products) addProduct(reqW http.ResponseWriter, req *http.Request) {
+func (prods *Products) AddProduct(reqW http.ResponseWriter, req *http.Request) {
 	prods.log.Println("POST request response")
-	// define an empty Product
-	prod := &data.Product{}
-	// get params for new product from request body
-	err := prod.FromJSON(req.Body)
-	// Be a good citizen and check error
-	if err != nil {
-		http.Error(reqW, "Unable to parse from JSON request body to Product", http.StatusBadRequest)
-	}
-	// submit new Product to data persist
-	prods.log.Printf("Prod: %#v", prod)
-	data.AddProduct(prod)
+	prod := req.Context().Value(KeyProduct{}).(data.Product)
+	data.AddProduct(&prod)
 }
 
-func (prods *Products) updateProducts(id int, reqW http.ResponseWriter, req *http.Request) {
-	prods.log.Println("Handle PUT Product")
+func (prods *Products) UpdateProducts(reqW http.ResponseWriter, req *http.Request) {
 
-	prod := &data.Product{}
-
-	err := prod.FromJSON(req.Body)
+	vars := mux.Vars(req)
+	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(reqW, "Unable to parse from JSON request body to Product", http.StatusBadRequest)
+		http.Error(reqW, "Unable to parse Product id", http.StatusBadRequest)
+		return
 	}
 
-	err = data.UpdateProduct(id, prod)
+	prods.log.Println("Handle PUT Product id", id)
+	prod := req.Context().Value(KeyProduct{}).(data.Product)
+
+	err = data.UpdateProduct(id, &prod)
 	if err == data.ErrProductNotFound {
 		http.Error(reqW, "Product not found", http.StatusNotFound)
 		return
@@ -106,4 +57,27 @@ func (prods *Products) updateProducts(id int, reqW http.ResponseWriter, req *htt
 		return
 	}
 
+}
+
+type KeyProduct struct {
+}
+
+// middleware takes next func of type http.Handler that can be chained
+// docs: https://github.com/gorilla/mux?tab=readme-ov-file#middleware
+func (prods *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
+		prod := &data.Product{}
+
+		err := prod.FromJSON(req.Body)
+		if err != nil {
+			prods.log.Println("Error deserializing Product", err)
+			http.Error(respW, "Unable to parse from JSON request body to Product", http.StatusBadRequest)
+			return
+		}
+
+		ctx := context.WithValue(req.Context(), KeyProduct{}, prod)
+		req = req.WithContext(ctx)
+
+		next.ServeHTTP(respW, req)
+	})
 }

@@ -1,13 +1,8 @@
 package data
 
 import (
-	"encoding/json"
 	"fmt"
-	"io"
-	"regexp"
 	"time"
-
-	"github.com/go-playground/validator"
 )
 
 // Product defines the structure for the API product
@@ -22,83 +17,74 @@ type Product struct {
 	DeletedOn   string  `json:"-"`
 }
 
-// Using the validator package to use struct tags for data validation
-// returns true or false if struct conforms to set out requirements
-func (prod *Product) Validate() error {
-	validate := validator.New()
-	// register a validation func that will run on "sku" tag
-	validate.RegisterValidation("sku", validateSKU)
-	return validate.Struct(prod)
-}
-
-func validateSKU(field validator.FieldLevel) bool {
-
-	reggieTheFinder := regexp.MustCompile(`[A-Za-z]+-[A-Za-z]+-[A-Za-z]+`)
-	matches := reggieTheFinder.FindAllString(field.Field().String(), -1)
-	fmt.Println(matches)
-	return len(matches) == 1
-}
-
 // Products is a collection of Product
 type Products []*Product
-
-// Serializes contents of the collection to JSON
-// NewEncoder has better performance than json.Unmarshall
-// due to no usage of interim buffer in memory
-func (prods *Products) ToJSON(wrt io.Writer) error {
-	encoder := json.NewEncoder(wrt)
-	return encoder.Encode(prods)
-}
-
-// Decoding struct from JSON
-func (prod *Product) FromJSON(re io.Reader) error {
-	decoder := json.NewDecoder(re)
-	return decoder.Decode(prod)
-}
 
 func GetProducts() Products {
 	return productList
 }
 
+func GetProductByID(id int) (*Product, error) {
+	index := findIndexByProductID(id)
+	if index == -1 {
+		return nil, ErrProductNotFound
+	}
+	return productList[index], nil
+}
+
 func AddProduct(prod *Product) {
-	prod.ID = getNextId()
+	maxID := productList[len(productList)-1].ID
+	fmt.Println("[DEBUG] maxID:", maxID)
+	prod.ID = maxID + 1
 	productList = append(productList, prod)
 }
 
-func UpdateProduct(id int, prod *Product) error {
-	_, pos, err := findProduct(id)
+func UpdateProduct(prod *Product) error {
+	fmt.Println("[DEBUG] looking for id:", prod.ID)
+	index := findIndexByProductID(prod.ID)
+	if index == -1 {
+		return ErrProductNotFound
+	}
+
+	// update product
+	productList[index] = prod
+	return nil
+}
+
+func DeleteProduct(id int) error {
+	index := findIndexByProductID(id)
+	if index == -1 {
+		return ErrProductNotFound
+	}
+
+	err := removeItemFromProducts(index)
 	if err != nil {
 		return err
 	}
-
-	prod.ID = id
-	productList[pos] = prod
-
 	return nil
+}
+
+func removeItemFromProducts(index int) error {
+	listLen := len(productList)
+	productList[index] = productList[listLen-1]
+	productList = productList[:listLen-1]
+	return nil
+}
+
+func findIndexByProductID(id int) int {
+	for i, prod := range productList {
+		if prod.ID == id {
+			return i
+		}
+	}
+	return -1 // if not found
 }
 
 var ErrProductNotFound = fmt.Errorf("Product not found")
 
-// Find product by id, used in PUT request func to return a single item
-// and update its params from request
-func findProduct(id int) (*Product, int, error) {
-	for index, prod := range productList {
-		if prod.ID == id {
-			return prod, index, nil
-		}
-	}
-
-	return &Product{}, -1, ErrProductNotFound
-}
-
-func getNextId() int {
-	lastItem := productList[len(productList)-1]
-	return lastItem.ID + 1
-}
-
 // Static data for time being as collection of Product
 var productList = []*Product{
-	&Product{
+	{
 		ID:          1,
 		Name:        "Latte",
 		Description: "Frothy milky coffee",
@@ -107,7 +93,7 @@ var productList = []*Product{
 		CreatedOn:   time.Now().UTC().String(),
 		UpdatedOn:   time.Now().UTC().String(),
 	},
-	&Product{
+	{
 		ID:          2,
 		Name:        "Long double espresso",
 		Description: "Tall espresso coffee shot without milk",

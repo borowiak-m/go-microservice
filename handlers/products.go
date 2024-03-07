@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -21,79 +19,133 @@ func NewProducts(log *log.Logger) *Products {
 
 func (prods *Products) GetProducts(reqW http.ResponseWriter, req *http.Request) {
 	// get products
-	lp := data.GetProducts()
+	allProds := data.GetProducts()
 	// encode to JSON format
-	err := lp.ToJSON(reqW)
+	err := data.ToJSON(allProds, reqW)
 	if err != nil {
 		http.Error(reqW, "Unable to marshall products to json", http.StatusInternalServerError)
 	}
 }
 
+func (prods *Products) GetSingleProduct(respW http.ResponseWriter, req *http.Request) {
+	id := getProductId(req)
+
+	prods.log.Println("[DEBUG] get record id:", id)
+
+	prod, err := data.GetProductByID(id)
+
+	switch err {
+	case nil:
+	case data.ErrProductNotFound:
+		prods.log.Println("[ERROR] fetching product:", err)
+
+		respW.WriteHeader(http.StatusNotFound)
+		data.ToJSON(&GenericError{Message: err.Error()}, respW)
+		return
+	default:
+		prods.log.Println("[ERROR] fetching product:", err)
+
+		respW.WriteHeader(http.StatusInternalServerError)
+		data.ToJSON(&GenericError{Message: err.Error()}, respW)
+		return
+	}
+
+	if err = data.ToJSON(prod, respW); err != nil {
+		prods.log.Println("[ERROR] serializing product", err)
+	}
+
+}
+
+func getProductId(req *http.Request) int {
+	// parse id from url
+	vars := mux.Vars(req)
+
+	id, err := strconv.Atoi(vars["id"])
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
 // POST request function to handle a creation of a new product
-func (prods *Products) AddProduct(reqW http.ResponseWriter, req *http.Request) {
+func (prods *Products) CreateProduct(reqW http.ResponseWriter, req *http.Request) {
 	prods.log.Println("POST request response")
 	prod := req.Context().Value(KeyProduct{}).(data.Product)
-	prods.log.Println("POST we have the prod:", prod)
+	prods.log.Println("[DEBUG] inserting prod:", prod)
 	data.AddProduct(&prod)
+}
+
+// DELETE /products/{id}
+func (prods *Products) Delete(respW http.ResponseWriter, req *http.Request) {
+	// get product
+	id := getProductId(req)
+	// log
+	prods.log.Println("[DEBUG] deleting record id", id)
+	// process deletion
+	err := data.DeleteProduct(id)
+	// error handle
+	// if prod not found
+	if err == data.ErrProductNotFound {
+		prods.log.Println("[ERROR] deleting product id doesn't exist")
+
+		respW.WriteHeader(http.StatusNotFound)
+		data.ToJSON(&GenericError{Message: err.Error()}, respW)
+		return
+	}
+	// if other error
+	if err != nil {
+		prods.log.Println("[ERROR] deleting product")
+
+		respW.WriteHeader(http.StatusInternalServerError)
+		data.ToJSON(&GenericError{Message: err.Error()}, respW)
+		return
+	}
+
+	respW.WriteHeader(http.StatusNoContent)
 }
 
 // PUT request function to handle updating items parameters fetched by id variable
 // via context storage with Gorilla framework
-func (prods *Products) UpdateProducts(reqW http.ResponseWriter, req *http.Request) {
-
+func (prods *Products) UpdateSingleProduct(respW http.ResponseWriter, req *http.Request) {
+	prods.log.Println("[DEBUG] UpdateSingleProduct starting")
 	vars := mux.Vars(req)
 	id, err := strconv.Atoi(vars["id"])
 	if err != nil {
-		http.Error(reqW, "Unable to parse Product id", http.StatusBadRequest)
+		http.Error(respW, "[ERROR] Unable to parse Product id", http.StatusBadRequest)
 		return
 	}
 
-	prods.log.Println("Handle PUT Product id", id)
+	prods.log.Println("[DEBUG] Handle PUT Product id", id)
 	prod := req.Context().Value(KeyProduct{}).(data.Product)
-
-	err = data.UpdateProduct(id, &prod)
+	// overwrite prod id in case body prod id != URL prod id
+	prod.ID = id
+	prods.log.Println("New product data", prod)
+	err = data.UpdateProduct(&prod)
+	// if product not found
 	if err == data.ErrProductNotFound {
-		http.Error(reqW, "Product not found", http.StatusNotFound)
-		return
-	}
+		prods.log.Println("[ERROR] product not found", err)
 
-	if err != nil {
-		http.Error(reqW, "Product not found", http.StatusInternalServerError)
+		respW.WriteHeader(http.StatusNotFound)
+		data.ToJSON(&GenericError{Message: "Product not found in database"}, respW)
 		return
 	}
+	// if other error when updating
+	if err != nil {
+		prods.log.Println("[ERROR] updating product", err)
+
+		respW.WriteHeader(http.StatusInternalServerError)
+		data.ToJSON(&GenericError{Message: "Product update FAILED"}, respW)
+		return
+	}
+	// success
+	respW.WriteHeader(http.StatusNoContent)
 
 }
 
 type KeyProduct struct {
 }
 
-// middleware takes next func of type http.Handler that can be chained
-// docs: https://github.com/gorilla/mux?tab=readme-ov-file#middleware
-func (prods *Products) MiddlewareProductValidation(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
-		prod := data.Product{}
-
-		err := prod.FromJSON(req.Body)
-		if err != nil {
-			prods.log.Println("Error deserializing Product", err)
-			http.Error(respW, "Unable to parse from JSON request body to Product", http.StatusBadRequest)
-			return
-		}
-
-		// validate the product
-		err = prod.Validate()
-		if err != nil {
-			prods.log.Println("[ERROR] validating product", err)
-			http.Error(
-				respW,
-				fmt.Sprintf("Error validating product: %s", err),
-				http.StatusBadRequest)
-			return
-		}
-
-		ctx := context.WithValue(req.Context(), KeyProduct{}, prod)
-		req = req.WithContext(ctx)
-
-		next.ServeHTTP(respW, req)
-	})
+// GenericError is a generic error message returned by a server
+type GenericError struct {
+	Message string `json:"message"`
 }

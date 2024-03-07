@@ -26,17 +26,22 @@ func main() {
 	//   register handlerProduct as server for "/products" pattern
 	getRouter := servMx.Methods(http.MethodGet).Subrouter()
 	getRouter.HandleFunc("/products", handlderProducts.GetProducts)
-	//servMx.Handle("/", handlderProducts)
+	getRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleProduct)
 
 	putRouter := servMx.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateProducts)
+	putRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateSingleProduct)
 	// executes middleware before it can go to the HandleFunc
 	putRouter.Use(handlderProducts.MiddlewareProductValidation)
 
 	postRouter := servMx.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/products", handlderProducts.AddProduct)
+	postRouter.HandleFunc("/products", handlderProducts.CreateProduct)
 	// executes middleware before it can go to the HandleFunc
 	postRouter.Use(handlderProducts.MiddlewareProductValidation)
+
+	deleteRouter := servMx.Methods(http.MethodDelete).Subrouter()
+	deleteRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.Delete)
+	// executes middleware before it can go to the HandleFunc
+	deleteRouter.Use(handlderProducts.MiddlewareProductValidation)
 
 	//
 	//   create web server

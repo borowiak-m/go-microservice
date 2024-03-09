@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"time"
 
+	"github.com/borowiak-m/go-microservice/data"
 	"github.com/borowiak-m/go-microservice/handlers"
 	"github.com/gorilla/mux"
 )
@@ -15,10 +16,12 @@ import (
 func main() {
 	// new logger
 	newlogger := log.New(os.Stdout, "product-api", log.LstdFlags)
+	// new validation
+	newValidation := data.NewValidation()
 
 	// HANDLERS
 	//   create handler for products with logger
-	handlderProducts := handlers.NewProducts(newlogger)
+	handlderProducts := handlers.NewProducts(newlogger, newValidation)
 
 	// SERVER
 	//   new serve mux

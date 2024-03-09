@@ -6,12 +6,13 @@ import (
 )
 
 func TestProduct_InvalidSKUReturnsErr(t *testing.T) {
-	prod := &Product{
+	prod := Product{
 		Name:  "nics",
 		Price: 90,
 		SKU:   "2AAA",
 	}
-	err := prod.Validate()
+	valid := NewValidation()
+	err := valid.Validate(prod)
 
 	if err != nil {
 		t.Fatal(err)
@@ -23,7 +24,8 @@ func TestProduct_MissingNameReturnsErr(t *testing.T) {
 		Price: 1.22,
 	}
 
-	err := prod.Validate()
+	valid := NewValidation()
+	err := valid.Validate(prod)
 
 	if err != nil {
 		t.Fatal(err)
@@ -36,7 +38,8 @@ func TestProduct_IncorrectPriceReturnsErr(t *testing.T) {
 		Price: -1.22,
 	}
 
-	err := prod.Validate()
+	valid := NewValidation()
+	err := valid.Validate(prod)
 
 	if err != nil {
 		t.Fatal(err)
@@ -44,12 +47,13 @@ func TestProduct_IncorrectPriceReturnsErr(t *testing.T) {
 }
 
 func TestProduct_ValidProductSuccess(t *testing.T) {
-	prod := &Product{
+	prod := Product{
 		Name:  "Namelyname",
 		Price: 90,
 		SKU:   "2AAA-GGG-DDD",
 	}
-	err := prod.Validate()
+	valid := NewValidation()
+	err := valid.Validate(prod)
 
 	if err != nil {
 		t.Fatal(err)

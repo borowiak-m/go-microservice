@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/borowiak-m/go-microservice/data"
@@ -23,11 +22,11 @@ func (prods *Products) MiddlewareProductValidation(next http.Handler) http.Handl
 		}
 
 		// validate the product
-		err = prod.Validate()
-		if err != nil {
+		vErrs := prods.val.Validate(prod)
+		if vErrs != nil {
 			prods.log.Println("[ERROR] validating product", err)
 			respW.WriteHeader(http.StatusUnprocessableEntity)
-			data.ToJSON(&GenericError{Message: fmt.Sprintf("Error validating product: %s", err)}, respW)
+			data.ToJSON(&ValidationError{Messages: vErrs.Errors()}, respW)
 			return
 		}
 

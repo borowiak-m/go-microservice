@@ -22,29 +22,36 @@ func main() {
 	// HANDLERS
 	//   create handler for products with logger
 	handlderProducts := handlers.NewProducts(newlogger, newValidation)
+	//   create handler for users with logger
+	handlerUsers := handlers.NewUsers(newlogger, newValidation)
 
 	// SERVER
 	//   new serve mux
 	servMx := mux.NewRouter()
 	//   register handlerProduct as server for "/products" pattern
-	getRouter := servMx.Methods(http.MethodGet).Subrouter()
-	getRouter.HandleFunc("/products", handlderProducts.GetProducts)
-	getRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleProduct)
+	getProdRouter := servMx.Methods(http.MethodGet).Subrouter()
+	getProdRouter.HandleFunc("/products", handlderProducts.GetProducts)
+	getProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleProduct)
 
-	putRouter := servMx.Methods(http.MethodPut).Subrouter()
-	putRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateSingleProduct)
+	putProdRouter := servMx.Methods(http.MethodPut).Subrouter()
+	putProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateSingleProduct)
 	// executes middleware before it can go to the HandleFunc
-	putRouter.Use(handlderProducts.MiddlewareProductValidation)
+	putProdRouter.Use(handlderProducts.MiddlewareProductValidation)
 
-	postRouter := servMx.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/products", handlderProducts.CreateProduct)
+	postProdRouter := servMx.Methods(http.MethodPost).Subrouter()
+	postProdRouter.HandleFunc("/products", handlderProducts.CreateProduct)
 	// executes middleware before it can go to the HandleFunc
-	postRouter.Use(handlderProducts.MiddlewareProductValidation)
+	postProdRouter.Use(handlderProducts.MiddlewareProductValidation)
 
-	deleteRouter := servMx.Methods(http.MethodDelete).Subrouter()
-	deleteRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.Delete)
+	deleteProdRouter := servMx.Methods(http.MethodDelete).Subrouter()
+	deleteProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.Delete)
 	// executes middleware before it can go to the HandleFunc
-	deleteRouter.Use(handlderProducts.MiddlewareProductValidation)
+	deleteProdRouter.Use(handlderProducts.MiddlewareProductValidation)
+
+	//   register handlerProduct as server for "/products" pattern
+	getUserRouter := servMx.Methods(http.MethodGet).Subrouter()
+	getUserRouter.HandleFunc("/users", handlerUsers.Get200)
+	//getUserRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleUser)
 
 	//
 	//   create web server

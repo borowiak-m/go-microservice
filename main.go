@@ -70,7 +70,7 @@ func main() {
 	// waiting on main process for termination signals to greacefully handle the event
 	// potentially close any db connections etc
 	sig := <-sigChan // blocking until receives a signal from sigChan
-	log.Println("Received terminate, greaceful shotdown", sig)
+	log.Println("Received terminate, greaceful shutdown", sig)
 	tcx, _ := context.WithTimeout(context.Background(), 30*time.Second)
 	server.Shutdown(tcx)
 }

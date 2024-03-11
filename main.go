@@ -21,7 +21,7 @@ func main() {
 
 	// HANDLERS
 	//   create handler for products with logger
-	handlderProducts := handlers.NewProducts(newlogger, newValidation)
+	handlerProducts := handlers.NewProducts(newlogger, newValidation)
 	//   create handler for users with logger
 	handlerUsers := handlers.NewUsers(newlogger, newValidation)
 
@@ -29,35 +29,40 @@ func main() {
 	//   new serve mux
 	servMx := mux.NewRouter()
 	//   register handlerProduct as server for "/products" pattern
-	getProdRouter := servMx.Methods(http.MethodGet).Subrouter()
-	getProdRouter.HandleFunc("/products", handlderProducts.GetProducts)
-	getProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleProduct)
-
-	putProdRouter := servMx.Methods(http.MethodPut).Subrouter()
-	putProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.UpdateSingleProduct)
-	// executes middleware before it can go to the HandleFunc
-	putProdRouter.Use(handlderProducts.MiddlewareProductValidation)
-
-	postProdRouter := servMx.Methods(http.MethodPost).Subrouter()
-	postProdRouter.HandleFunc("/products", handlderProducts.CreateProduct)
-	// executes middleware before it can go to the HandleFunc
-	postProdRouter.Use(handlderProducts.MiddlewareProductValidation)
-
-	deleteProdRouter := servMx.Methods(http.MethodDelete).Subrouter()
-	deleteProdRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.Delete)
-	// executes middleware before it can go to the HandleFunc
-	deleteProdRouter.Use(handlderProducts.MiddlewareProductValidation)
-
-	//   register handlerProduct as server for "/products" pattern
-	getUserRouter := servMx.Methods(http.MethodGet).Subrouter()
-	getUserRouter.HandleFunc("/users", handlerUsers.Get200)
+	getRouter := servMx.Methods(http.MethodGet).Subrouter()
+	getRouter.HandleFunc("/products", handlerProducts.GetProducts)
+	getRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.GetSingleProduct)
+	getRouter.HandleFunc("/users", handlerUsers.Get200)
 	//getUserRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleUser)
 
-	//
+	putRouter := servMx.Methods(http.MethodPut).Subrouter()
+	putRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.UpdateSingleProduct)
+	// executes middleware before it can go to the HandleFunc
+	putRouter.Use(handlerProducts.MiddlewareProductValidation)
+
+	postRouter := servMx.Methods(http.MethodPost).Subrouter()
+	postRouter.HandleFunc("/products", handlerProducts.CreateProduct)
+	postRouter.HandleFunc("/users/signup", handlerUsers.Get200)
+	postRouter.HandleFunc("/users/login", handlerUsers.Get200)
+	// executes middleware before it can go to the HandleFunc
+	postRouter.Use(handlerProducts.MiddlewareProductValidation)
+	postRouter.Use(handlerUsers.MiddlewareUserAuth)
+
+	deleteRouter := servMx.Methods(http.MethodDelete).Subrouter()
+	deleteRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.Delete)
+	// executes middleware before it can go to the HandleFunc
+	deleteRouter.Use(handlerProducts.MiddlewareProductValidation)
+
+	//   get port from env file
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "9090"
+	}
+
 	//   create web server
 	server := &http.Server{
-		Addr:         ":9090", // on port 9090
-		Handler:      servMx,  // using defined serv mux
+		Addr:         (":" + port), // on port 9090
+		Handler:      servMx,       // using defined serv mux
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  1 * time.Second,
 		WriteTimeout: 1 * time.Second,

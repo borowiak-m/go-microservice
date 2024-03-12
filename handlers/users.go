@@ -18,5 +18,16 @@ func NewUsers(log *log.Logger, val *data.Validation) *Users {
 
 func (users *Users) Get200(respW http.ResponseWriter, req *http.Request) {
 	respW.WriteHeader(http.StatusOK)
-	data.ToJSON(&GenericResponse{Message: "All good"}, respW)
+	data.ToJSON(&GenericResponse{Message: "All good from Get200"}, respW)
 }
+
+func (users *Users) GetSingleUser(respW http.ResponseWriter, req *http.Request) {
+	respW.WriteHeader(http.StatusOK)
+	data.ToJSON(&GenericResponse{Message: "All good from GetSingleUser"}, respW)
+}
+
+func HashPassword()
+func VerifyPassword()
+func Signup()
+func Login()
+func GetUsers()

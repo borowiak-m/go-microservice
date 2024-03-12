@@ -33,7 +33,8 @@ func main() {
 	getRouter.HandleFunc("/products", handlerProducts.GetProducts)
 	getRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.GetSingleProduct)
 	getRouter.HandleFunc("/users", handlerUsers.Get200)
-	//getUserRouter.HandleFunc("/products/{id:[0-9]+}", handlderProducts.GetSingleUser)
+	getRouter.HandleFunc("/users/{id:[0-9]+}", handlerUsers.GetSingleUser)
+	getRouter.Use(handlerUsers.MiddlewareUserAuth)
 
 	putRouter := servMx.Methods(http.MethodPut).Subrouter()
 	putRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.UpdateSingleProduct)

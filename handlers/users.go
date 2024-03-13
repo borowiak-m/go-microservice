@@ -16,10 +16,18 @@ type Users struct {
 	val *data.Validation
 }
 
-//type KeyUserType struct{}
+type KeyUser struct{}
 
 func NewUsers(log *log.Logger, val *data.Validation) *Users {
 	return &Users{log, val}
+}
+
+// POST request function to handle a creation of a new product
+func (users *Users) CreateUser(reqW http.ResponseWriter, req *http.Request) {
+	users.log.Println("POST user request response")
+	user := req.Context().Value(KeyUser{}).(data.User)
+	users.log.Println("[DEBUG] inserting user:", user)
+	data.AddUser(&user)
 }
 
 func (users *Users) Get200(respW http.ResponseWriter, req *http.Request) {
@@ -81,6 +89,5 @@ func getUserId(req *http.Request) int {
 
 // func HashPassword()
 // func VerifyPassword()
-// func Signup()
 // func Login()
 // func GetUsers()

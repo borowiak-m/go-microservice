@@ -1,9 +1,13 @@
 package data
 
 import (
+	"context"
+	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type User struct {
@@ -19,4 +23,18 @@ type User struct {
 	CreatedOn    time.Time          `json:"-"`
 	UpdatedOn    time.Time          `json:"-"`
 	UserId       string             `json:"user_id"`
+}
+
+var UserCollection *mongo.Collection = OpenCollection(MongoCfg.Client, MongoCfg.DatabaseName, "user")
+var ErrUserNotFound = fmt.Errorf("User not found")
+
+func GetUserByID(id int) (*User, error) {
+	user := User{}
+	ctx, cancel := context.WithTimeout(context.Background(), 100*time.Second)
+	defer cancel()
+	err := UserCollection.FindOne(ctx, bson.M{"user_id": id}).Decode(&user)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+	return &user, nil
 }

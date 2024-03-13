@@ -41,13 +41,17 @@ func main() {
 	// executes middleware before it can go to the HandleFunc
 	putRouter.Use(handlerProducts.MiddlewareProductValidation)
 
-	postRouter := servMx.Methods(http.MethodPost).Subrouter()
-	postRouter.HandleFunc("/products", handlerProducts.CreateProduct)
-	postRouter.HandleFunc("/users/signup", handlerUsers.Get200)
-	postRouter.HandleFunc("/users/login", handlerUsers.Get200)
+	postProdRouter := servMx.Methods(http.MethodPost).Subrouter()
+	postProdRouter.HandleFunc("/products", handlerProducts.CreateProduct)
 	// executes middleware before it can go to the HandleFunc
-	postRouter.Use(handlerProducts.MiddlewareProductValidation)
-	postRouter.Use(handlerUsers.MiddlewareUserAuth)
+	postProdRouter.Use(handlerProducts.MiddlewareProductValidation)
+
+	postUserRouter := servMx.Methods(http.MethodPost).Subrouter()
+	postUserRouter.HandleFunc("/users/signup", handlerUsers.CreateUser)
+	postUserRouter.HandleFunc("/users/login", handlerUsers.Get200)
+	// executes middleware before it can go to the HandleFunc
+	postUserRouter.Use(handlerUsers.MiddlewareUserAuth)
+	postUserRouter.Use(handlerUsers.MiddlewareUserValidation)
 
 	deleteRouter := servMx.Methods(http.MethodDelete).Subrouter()
 	deleteRouter.HandleFunc("/products/{id:[0-9]+}", handlerProducts.Delete)

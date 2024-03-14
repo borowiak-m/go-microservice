@@ -19,7 +19,7 @@ func (users *Users) MiddlewareUserAuth(next http.Handler) http.Handler {
 
 }
 
-func (users *Users) MiddlewareUserValidation(next http.Handler) http.Handler {
+func (users *Users) MiddlewareUserSignupValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
 		// define empty user object
 		user := data.User{}
@@ -44,6 +44,37 @@ func (users *Users) MiddlewareUserValidation(next http.Handler) http.Handler {
 		}
 		// add user obj to conext and add to request
 		ctx := context.WithValue(req.Context(), KeyUser{}, user)
+		req = req.WithContext(ctx)
+		// pass to next handler
+		next.ServeHTTP(respW, req)
+	})
+}
+
+func (users *Users) MiddlewareUserLoginValidation(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
+		// define empty user object
+		userLogin := data.UserLogin{}
+		// deserialize json from request body into the empty object
+		err := data.FromJSON(&userLogin, req.Body)
+		// handler errors
+		if err != nil {
+			users.log.Println("[ERROR] deserializing User Login", err)
+			respW.WriteHeader(http.StatusBadRequest)
+			data.ToJSON(&GenericError{Message: err.Error()}, respW)
+			return
+		}
+		users.log.Println("[DEBUG] processing user login:", userLogin)
+		// validate the user
+		// capture validation errors
+		vErrs := users.val.Validate(userLogin)
+		if vErrs != nil {
+			users.log.Println("[ERROR] validating User Login", err)
+			respW.WriteHeader(http.StatusUnprocessableEntity)
+			data.ToJSON(&ValidationError{Messages: vErrs.Errors()}, respW)
+			return
+		}
+		// add user obj to conext and add to request
+		ctx := context.WithValue(req.Context(), KeyUserLogin{}, userLogin)
 		req = req.WithContext(ctx)
 		// pass to next handler
 		next.ServeHTTP(respW, req)

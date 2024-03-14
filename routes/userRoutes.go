@@ -22,12 +22,12 @@ func RegisterUserRoutes(newlogger *log.Logger, newValidation *data.Validation, m
 	getUserRouter.HandleFunc("/users/{id:[0-9]+}", handlerUsers.GetSingleUser)
 	getUserRouter.Use(handlerUsers.MiddlewareUserAuth)
 	// POST /users/signup
-	postUserSignupRouter.HandleFunc("/users/signup", handlerUsers.CreateUser)
+	postUserSignupRouter.HandleFunc("/users/signup", handlerUsers.Signup)
 	// POST /users/signup Middleware: executes before it can go to the HandleFunc
 	postUserSignupRouter.Use(handlerUsers.MiddlewareUserAuth)
 	postUserSignupRouter.Use(handlerUsers.MiddlewareUserSignupValidation)
 	// POST /users/login
-	postUserLoginRouter.HandleFunc("/users/login", handlerUsers.Get200)
+	postUserLoginRouter.HandleFunc("/users/login", handlerUsers.Login)
 	// POST /users/login Middleware: executes before it can go to the HandleFunc
 	postUserLoginRouter.Use(handlerUsers.MiddlewareUserAuth)
 	postUserLoginRouter.Use(handlerUsers.MiddlewareUserLoginValidation)

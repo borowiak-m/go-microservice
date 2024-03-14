@@ -1,4 +1,4 @@
-package helper
+package helpers
 
 import (
 	"errors"
@@ -19,7 +19,7 @@ func CheckUserType(req *http.Request, role string) error {
 	return nil
 }
 
-func MatchUserTypeToId(req *http.Request, userId int) error {
+func MatchUserTypeToId(req *http.Request, userId string) error {
 	userType := getUserType(req)
 	uid := getUserUid(req)
 	log.Printf("From MatchUserTypeToId, intercepted usertype %s and uid %v", userType, uid)
@@ -34,7 +34,7 @@ func getUserType(req *http.Request) string {
 	return "ADMIN"
 }
 
-func getUserUid(req *http.Request) int {
+func getUserUid(req *http.Request) string {
 	//return req.Context().Value("uid").(int)
-	return 1234
+	return "1234"
 }

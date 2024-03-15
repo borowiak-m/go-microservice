@@ -13,13 +13,13 @@ func RegisterUserRoutes(newlogger *log.Logger, newValidation *data.Validation, m
 	//   create handler for users with logger
 	handlerUsers := handlers.NewUsers(newlogger, newValidation)
 	// create subrouters per method
-	getUserRouter := muxRouter.Methods(http.MethodPost).Subrouter()
+	getUserRouter := muxRouter.Methods(http.MethodGet).Subrouter()
 	postUserSignupRouter := muxRouter.Methods(http.MethodPost).Subrouter()
 	postUserLoginRouter := muxRouter.Methods(http.MethodPost).Subrouter()
 	// GET /users
-	getUserRouter.HandleFunc("/users", handlerUsers.Get200)
+	getUserRouter.HandleFunc("/users", handlerUsers.GetAllUsers)
 	// GET /users/{id}
-	getUserRouter.HandleFunc("/users/{id:[0-9]+}", handlerUsers.GetSingleUser)
+	getUserRouter.HandleFunc("/users/{user_id:[0-9]+}", handlerUsers.GetSingleUser)
 	getUserRouter.Use(handlerUsers.MiddlewareUserAuth)
 	// POST /users/signup
 	postUserSignupRouter.HandleFunc("/users/signup", handlerUsers.Signup)

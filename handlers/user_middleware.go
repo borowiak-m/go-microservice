@@ -10,13 +10,9 @@ import (
 func (users *Users) MiddlewareUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
 		users.log.Println("Hello from users auth middleware")
-		// if we need to add values to context to pass the req with
-		//ctx := context.WithValue(req.Context(), SomeKey{}, someValue)
-		//req = req.WithContext(ctx)
-
+		CheckUserSessionValid(respW, req)
 		next.ServeHTTP(respW, req)
 	})
-
 }
 
 func (users *Users) MiddlewareUserSignupValidation(next http.Handler) http.Handler {
@@ -53,7 +49,7 @@ func (users *Users) MiddlewareUserSignupValidation(next http.Handler) http.Handl
 func (users *Users) MiddlewareUserLoginValidation(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(respW http.ResponseWriter, req *http.Request) {
 		// define empty user object
-		userLogin := data.UserLogin{}
+		userLogin := data.Credentials{}
 		// deserialize json from request body into the empty object
 		err := data.FromJSON(&userLogin, req.Body)
 		// handler errors

@@ -29,7 +29,7 @@ type User struct {
 	UserId       string             `json:"user_id"`
 }
 
-type UserLogin struct {
+type Credentials struct {
 	Password string `json:"password" validate:"required"` //, min=6, max=30
 	Email    string `json:"email" validate:"required"`    //, email
 }
@@ -65,7 +65,6 @@ func UpdateAllUserTokens(token, refreshToken, userId string) error {
 	defer cancel()
 	var updateObj primitive.D
 	userUpdatedOn := time.Now().UTC()
-
 	updateObj = append(updateObj, bson.E{"token", token})
 	updateObj = append(updateObj, bson.E{"refresh_token", refreshToken})
 	updateObj = append(updateObj, bson.E{"updated_on", userUpdatedOn})
@@ -135,7 +134,6 @@ func hashPassword(pass string) (string, error) {
 		return string(hashPass), err
 	}
 	return string(hashPass), nil
-
 }
 
 func doesUserAlreadyExist(email string) (bool, error) {
